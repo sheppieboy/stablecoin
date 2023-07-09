@@ -4,11 +4,11 @@ pragma solidity 0.8.18;
 import {ERC20, ERC20Burnable} from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
-error BalanceMustbeMoreThanZero();
-error BurnAmountExceedsBalance();
-error InvalidAddress();
-
 contract StableCoin is ERC20Burnable, Ownable {
+    error BalanceMustbeMoreThanZero();
+    error BurnAmountExceedsBalance();
+    error InvalidAddress();
+
     constructor() ERC20("Decentralized StableCoin", "DSC") {}
 
     function burn(uint256 _amount) public override onlyOwner {
