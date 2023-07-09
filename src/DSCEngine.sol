@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
+import "./StableCoin.sol";
+
 /**
  * @title DSCEngine
  * @author
@@ -24,11 +26,14 @@ contract DSCEngine {
      * Errors *
      **********/
     error NeedsMoreThanZero();
+    error TokenAddressesAndPriceAddressesMustBeSameLength();
 
     /**********************
      * State Variables *
      **********************/
     mapping(address token => address priceFeed) private priceFeeds; //mapping fo token address to price feed address
+
+    StableCoin private immutable dsc;
 
     /*************
      * Modifiers *
@@ -46,7 +51,21 @@ contract DSCEngine {
     /*************
      * Functions *
      *************/
-    constructor() {}
+    constructor(
+        address[] memory tokenAddresses,
+        address[] memory priceFeedAddresses,
+        address dscAddress
+    ) {
+        if (tokenAddresses.length != priceFeedAddresses.length) {
+            revert TokenAddressesAndPriceAddressesMustBeSameLength();
+        }
+
+        //set mapping of price feeds
+        for (uint256 i = 0; i < tokenAddresses.length; i++) {
+            priceFeeds[tokenAddresses[i]] = priceFeedAddresses[i];
+        }
+        dsc = StableCoin(dscAddress);
+    }
 
     /**********************
      * External Functions *
