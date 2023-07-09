@@ -1,6 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
+/**********
+ * Errors *
+ **********/
+error NeedsMoreThanZero();
+
 /**
  * @title DSCEngine
  * @author
@@ -18,7 +23,28 @@ pragma solidity 0.8.18;
  *
  * @notice This contract is loosely based on teh MakerDAO DSS (DAI) System.
  */
+
 contract DSCEngine {
+    /*************
+     * Modifiers *
+     *************/
+
+    modifier moreThanZero(uint256 amount) {
+        if (amount == 0) {
+            revert NeedsMoreThanZero();
+        }
+        _;
+    }
+
+    /*************
+     * Functions *
+     *************/
+    constructor() {}
+
+    /**********************
+     * External Functions *
+     **********************/
+
     /**
      * Function to deposit collateral and recieve an equivalent stablecoin amount
      */
@@ -27,8 +53,14 @@ contract DSCEngine {
     /**
      * function to deposit collateral to increase the current collateralization of position
      * i.e. a top function for a user's position
+     *
+     * @param tokenCollateralAddress the address of the token to deposit as collateral
+     * @param amountCollateral the amount of collateral to deposit
      */
-    function depositCollateral() external {}
+    function depositCollateral(
+        address tokenCollateralAddress,
+        uint256 amountCollateral
+    ) external moreThanZero(amountCollateral) {}
 
     /**
      * function to redeem the collateral in exchange for the equivalent stablecoin amount
