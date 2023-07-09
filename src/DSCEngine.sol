@@ -2,6 +2,7 @@
 pragma solidity 0.8.18;
 
 import "./StableCoin.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 /**
  * @title DSCEngine
@@ -22,22 +23,36 @@ import "./StableCoin.sol";
  */
 
 contract DSCEngine {
-    /**********
+    /**
+     *
      * Errors *
-     **********/
+     *
+     */
     error NeedsMoreThanZero();
     error TokenAddressesAndPriceAddressesMustBeSameLength();
+    error InvalidTokenAddress();
+    error TransferFailed();
 
-    /**********************
+    /**
+     *
      * State Variables *
-     **********************/
+     *
+     */
     mapping(address token => address priceFeed) private priceFeeds; //mapping fo token address to price feed address
+    mapping(address user => mapping(address token => uint256 amount)) private collateralDeposited;
 
     StableCoin private immutable dsc;
 
-    /*************
+    /**
+     * EVENTS
+     */
+    event CollateralDeposited(address indexed user, address indexed collateralTokenAddress, uint256 amount);
+
+    /**
+     *
      * Modifiers *
-     *************/
+     *
+     */
 
     modifier moreThanZero(uint256 amount) {
         if (amount == 0) {
@@ -46,16 +61,19 @@ contract DSCEngine {
         _;
     }
 
-    modifier isAllowedToken(address token) {}
+    modifier isAllowedToken(address token) {
+        if (priceFeeds[token] == address(0)) {
+            revert InvalidTokenAddress();
+        }
+        _;
+    }
 
-    /*************
+    /**
+     *
      * Functions *
-     *************/
-    constructor(
-        address[] memory tokenAddresses,
-        address[] memory priceFeedAddresses,
-        address dscAddress
-    ) {
+     *
+     */
+    constructor(address[] memory tokenAddresses, address[] memory priceFeedAddresses, address dscAddress) {
         if (tokenAddresses.length != priceFeedAddresses.length) {
             revert TokenAddressesAndPriceAddressesMustBeSameLength();
         }
@@ -67,9 +85,11 @@ contract DSCEngine {
         dsc = StableCoin(dscAddress);
     }
 
-    /**********************
+    /**
+     *
      * External Functions *
-     **********************/
+     *
+     */
 
     /**
      * Function to deposit collateral and recieve an equivalent stablecoin amount
@@ -83,10 +103,18 @@ contract DSCEngine {
      * @param tokenCollateralAddress the address of the token to deposit as collateral
      * @param amountCollateral the amount of collateral to deposit
      */
-    function depositCollateral(
-        address tokenCollateralAddress,
-        uint256 amountCollateral
-    ) external moreThanZero(amountCollateral) {}
+    function depositCollateral(address tokenCollateralAddress, uint256 amountCollateral)
+        external
+        moreThanZero(amountCollateral)
+        isAllowedToken(tokenCollateralAddress)
+    {
+        collateralDeposited[msg.sender][tokenCollateralAddress] += amountCollateral;
+        emit CollateralDeposited(msg.sender, tokenCollateralAddress, amountCollateral);
+        bool success = IERC20(tokenCollateralAddress).transferFrom(msg.sender, address(this), amountCollateral);
+        if (!success) {
+            revert TransferFailed();
+        }
+    }
 
     /**
      * function to redeem the collateral in exchange for the equivalent stablecoin amount
