@@ -1,11 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
-/**********
- * Errors *
- **********/
-error NeedsMoreThanZero();
-
 /**
  * @title DSCEngine
  * @author
@@ -25,6 +20,16 @@ error NeedsMoreThanZero();
  */
 
 contract DSCEngine {
+    /**********
+     * Errors *
+     **********/
+    error NeedsMoreThanZero();
+
+    /**********************
+     * State Variables *
+     **********************/
+    mapping(address token => address priceFeed) private priceFeeds; //mapping fo token address to price feed address
+
     /*************
      * Modifiers *
      *************/
@@ -35,6 +40,8 @@ contract DSCEngine {
         }
         _;
     }
+
+    modifier isAllowedToken(address token) {}
 
     /*************
      * Functions *
