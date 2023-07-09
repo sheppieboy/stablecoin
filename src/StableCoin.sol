@@ -1,21 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
-import "@openzeppelin/contracts/token/ERC20/extensions";
+import {ERC20, ERC20Burnable} from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-
-/**
- * @title StableCoin
- * @author Luke Sheppard
- * Collateral: Exogenous (BTC and ETH)
- * Relative Stability: Pegged to USD
- *
- * This contract meant to be giverned by DSCEngine. This contract is the ERC20 implementation of the
- * stable coin
- */
 
 error BalanceMustbeMoreThanZero();
 error BurnAmountExceedsBalance();
+error InvalidAddress();
 
 contract StableCoin is ERC20Burnable, Ownable {
     constructor() ERC20("Decentralized StableCoin", "DSC") {}
@@ -30,5 +21,20 @@ contract StableCoin is ERC20Burnable, Ownable {
         }
 
         super.burn(_amount);
+    }
+
+    function mint(
+        address _to,
+        uint256 _amount
+    ) external onlyOwner returns (bool) {
+        if (_to == address(0)) {
+            revert InvalidAddress();
+        }
+
+        if (_amount <= 0) {
+            revert BalanceMustbeMoreThanZero();
+        }
+        _mint(_to, _amount);
+        return true;
     }
 }
