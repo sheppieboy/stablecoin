@@ -3,6 +3,7 @@ pragma solidity 0.8.18;
 
 import "./StableCoin.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import ""
 
 /**
  * @title DSCEngine
@@ -201,5 +202,16 @@ contract DSCEngine {
     function getAccountCollateralValue(address user) public view returns (uint256) {
         //loop through each collateral token, get the amount they have deposited, and map it to
         // the price, to get the USD value
+        for(uint256 i = 0; i<collateralTokens.length; i++){
+            address token = collateralTokens[i];
+            uint256 amount = collateralDeposited[user][token];
+            totalCollateralValueInUSD = 
+        }
     }
+
+    function getUSDValue(address token, uint256 amount) public view returns(uint256){
+
+    }
+
+    
 }
