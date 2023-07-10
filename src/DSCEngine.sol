@@ -34,6 +34,7 @@ contract DSCEngine {
     error InvalidTokenAddress();
     error TransferFailed();
     error BreaksHealthFactor(uint256 userhealthFactor);
+    error MintFailed();
 
     /**
      *
@@ -160,7 +161,11 @@ contract DSCEngine {
     function mintDSC(uint256 amountDSCToMint) external moreThanZero(amountDSCToMint) {
         dscMinted[msg.sender] += amountDSCToMint;
         //if they minted too much
-        revertIfHealthFactorIsBroken(msg.sender);
+        _revertIfHealthFactorIsBroken(msg.sender);
+        bool minted = dsc.mint(msg.sender, amountDSCToMint);
+        if (!minted) {
+            revert MintFailed();
+        }
     }
 
     ///////////////////
@@ -177,7 +182,7 @@ contract DSCEngine {
 
     /**
      * Checks the health factor of a users position, i.e. do they have enough collateral
-     * reverts if they do not
+     * reverts if they do not meet the min health factor requirements
      * @param user the users address that is trying to mint or redeem
      */
     function _revertIfHealthFactorIsBroken(address user) internal view {
