@@ -3,7 +3,7 @@ pragma solidity 0.8.18;
 
 import "./StableCoin.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import ""
+import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 
 /**
  * @title DSCEngine
@@ -39,6 +39,9 @@ contract DSCEngine {
      * State Variables *
      *
      */
+    uint256 private constant ADDITION_FEED_PRECISION = 1e10;
+    uint256 private constant PRECISION = 1e18;
+
     mapping(address token => address priceFeed) private priceFeeds; //mapping fo token address to price feed address
     mapping(address user => mapping(address token => uint256 amount)) private collateralDeposited;
     mapping(address user => uint256 amountDSCMinted) private dscMinted;
@@ -185,13 +188,23 @@ contract DSCEngine {
         (uint256 totalDSCMInted, uint256 collateralValueInUSD) = _getAccountInformation(user);
     }
 
+    /**
+     *
+     * @param user the address of a user
+     * @return totalDSCMinted returns the total amount of DSC stablecoin minted
+     * @return collateralValueInUSD returns the total collateral value
+     *
+     * This is an internal function that gets the account information of a user.  It will return the users
+     * total minted DSC stablecoins and their current collateral value
+     */
+
     function _getAccountInformation(address user)
         private
         view
         returns (uint256 totalDSCMinted, uint256 collateralValueInUSD)
     {
         totalDSCMinted = dscMinted[user];
-        collateralValueInUSD = getAcccountCollateralValue(user);
+        collateralValueInUSD = getAccountCollateralValue(user);
     }
 
     ////////////////////////////////////////////////////////////////////////////
@@ -202,16 +215,16 @@ contract DSCEngine {
     function getAccountCollateralValue(address user) public view returns (uint256) {
         //loop through each collateral token, get the amount they have deposited, and map it to
         // the price, to get the USD value
-        for(uint256 i = 0; i<collateralTokens.length; i++){
+        for (uint256 i = 0; i < collateralTokens.length; i++) {
             address token = collateralTokens[i];
             uint256 amount = collateralDeposited[user][token];
-            totalCollateralValueInUSD = 
+            // totalCollateralValueInUSD =
         }
     }
 
-    function getUSDValue(address token, uint256 amount) public view returns(uint256){
-
+    function getUSDValue(address token, uint256 amount) public view returns (uint256) {
+        AggregatorV3Interface priceFeed = AggregatorV3Interface(priceFeeds[token]);
+        (, int256 price,,,) = priceFeed.latestRoundData();
+        return ((uint256(price) * ADDITION_FEED_PRECISION) * amount) / PRECISION;
     }
-
-    
 }
