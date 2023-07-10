@@ -212,13 +212,13 @@ contract DSCEngine {
     // External & Public View & Pure Functions ////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////
-    function getAccountCollateralValue(address user) public view returns (uint256) {
+    function getAccountCollateralValue(address user) public view returns (uint256 totalCollateralValueInUSD) {
         //loop through each collateral token, get the amount they have deposited, and map it to
         // the price, to get the USD value
         for (uint256 i = 0; i < collateralTokens.length; i++) {
             address token = collateralTokens[i];
             uint256 amount = collateralDeposited[user][token];
-            // totalCollateralValueInUSD =
+            totalCollateralValueInUSD += getUSDValue(token, amount);
         }
     }
 
