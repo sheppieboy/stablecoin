@@ -33,6 +33,7 @@ contract DSCEngine {
     error TokenAddressesAndPriceAddressesMustBeSameLength();
     error InvalidTokenAddress();
     error TransferFailed();
+    error BreaksHealthFactor(uint256 userhealthFactor);
 
     /**
      *
@@ -43,6 +44,7 @@ contract DSCEngine {
     uint256 private constant PRECISION = 1e18;
     uint256 private constant LIQUIDATION_THRESHOLD = 50; //200% covercollateralized
     uint256 private constant LIQUIDATION_PRECISION = 100;
+    uint256 private constant MIN_HEALTH_FACTOR = 1;
 
     mapping(address token => address priceFeed) private priceFeeds; //mapping fo token address to price feed address
     mapping(address user => mapping(address token => uint256 amount)) private collateralDeposited;
@@ -158,7 +160,7 @@ contract DSCEngine {
     function mintDSC(uint256 amountDSCToMint) external moreThanZero(amountDSCToMint) {
         dscMinted[msg.sender] += amountDSCToMint;
         //if they minted too much
-        _revertIfHealthFactorIsBroken(msg.sender);
+        revertIfHealthFactorIsBroken(msg.sender);
     }
 
     ///////////////////
@@ -178,7 +180,12 @@ contract DSCEngine {
      * reverts if they do not
      * @param user the users address that is trying to mint or redeem
      */
-    function _revertIfHealthFactorIsBroken(address user) internal view {}
+    function _revertIfHealthFactorIsBroken(address user) internal view {
+        uint256 userhealthFactor = _healthFactor(user);
+        if (userhealthFactor < MIN_HEALTH_FACTOR) {
+            revert BreaksHealthFactor(userhealthFactor);
+        }
+    }
 
     /**
      * @param user takes a users address
