@@ -6,6 +6,8 @@ import "../src/DSCEngine.sol";
 import "@openzeppelin/contracts/interfaces/IERC20.sol";
 
 contract DSCEngineTest is Test {
+    using stdStorage for StdStorage;
+
     uint256 private mainnetFork;
     DSCEngine private engine;
     address public WETH;
@@ -17,8 +19,10 @@ contract DSCEngineTest is Test {
         mainnetFork = vm.createSelectFork(vm.envString("MAINNET_RPC_URL"));
         //add WETH and WBTC token address to tokenAddresses array
         address[] memory tokenAddresses = new address[](2);
+
         WETH = address(0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2);
         WBTC = address(0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599);
+
         tokenAddresses[0] = WETH;
         tokenAddresses[1] = WBTC;
 
@@ -40,17 +44,33 @@ contract DSCEngineTest is Test {
     //DepositCollateral tests
     function test_NotAllowedToken() public {
         deal(dai, randomUser, 1 ether);
-        vm.prank(randomUser);
+        vm.startPrank(randomUser);
+        IERC20(WETH).approve(address(engine), 0);
         vm.expectRevert(InvalidTokenAddress.selector);
         engine.depositCollateral(dai, 50);
+        vm.stopPrank();
     }
 
     function test_IsZeroDeposit() public {
         deal(WETH, randomUser, 1 ether);
-        vm.prank(randomUser);
+        vm.startPrank(randomUser);
+        IERC20(WETH).approve(address(engine), 0);
         vm.expectRevert(NeedsMoreThanZero.selector);
         engine.depositCollateral(WETH, 0);
+        vm.stopPrank();
     }
 
-    function test_collateralDepositUpdated() public {}
+    function test_collateralDepositUpdatedCorrectly() public {
+        deal(WETH, randomUser, 1 ether);
+        uint256 balance = IERC20(WETH).balanceOf(randomUser);
+        assertEq(balance, 1 ether);
+        uint256 transferAmount = 0.5 ether;
+        assertGe(balance, transferAmount);
+
+        vm.startPrank(randomUser);
+        IERC20(WETH).approve(address(engine), transferAmount);
+        engine.depositCollateral(WETH, 0.5 ether);
+        assertEq(IERC20(WETH).balanceOf(address(engine)), 0.5 ether);
+        vm.stopPrank();
+    }
 }
