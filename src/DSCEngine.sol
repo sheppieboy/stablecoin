@@ -41,6 +41,8 @@ contract DSCEngine {
      */
     uint256 private constant ADDITION_FEED_PRECISION = 1e10;
     uint256 private constant PRECISION = 1e18;
+    uint256 private constant LIQUIDATION_THRESHOLD = 50; //200% covercollateralized
+    uint256 private constant LIQUIDATION_PRECISION = 100;
 
     mapping(address token => address priceFeed) private priceFeeds; //mapping fo token address to price feed address
     mapping(address user => mapping(address token => uint256 amount)) private collateralDeposited;
@@ -179,13 +181,16 @@ contract DSCEngine {
     function _revertIfHealthFactorIsBroken(address user) internal view {}
 
     /**
-     * Returns how close to a liquiddation a user is
+     * @param user takes a users address
+     * @return healthFactor returns a uint256 number close to 1 and it is how close to a liquidation a user is
      * If a user goes below 1, then they can get liquidated
      */
-    function _healthFactor(address user) private view returns (uint256) {
+    function _healthFactor(address user) private view returns (uint256 healthFactor) {
         //total collateral value
         //total DSC minted
         (uint256 totalDSCMInted, uint256 collateralValueInUSD) = _getAccountInformation(user);
+        uint256 collateralAdjustedForThreshold = (collateralValueInUSD * LIQUIDATION_THRESHOLD) / LIQUIDATION_PRECISION;
+        healthFactor = (collateralAdjustedForThreshold * PRECISION) / totalDSCMInted;
     }
 
     /**
@@ -212,6 +217,14 @@ contract DSCEngine {
     // External & Public View & Pure Functions ////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////
+
+    /**
+     *
+     * @param user the address of the user to check their collateralValue in usd
+     * @return totalCollateralValueInUSD returns the value of a user's collateral in USD
+     *
+     * This is a public view function that retrieves the collateral token and returns the value of that collateral in USD
+     */
     function getAccountCollateralValue(address user) public view returns (uint256 totalCollateralValueInUSD) {
         //loop through each collateral token, get the amount they have deposited, and map it to
         // the price, to get the USD value
