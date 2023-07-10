@@ -42,6 +42,8 @@ contract DSCEngine {
     mapping(address user => mapping(address token => uint256 amount)) private collateralDeposited;
     mapping(address user => uint256 amountDSCMinted) private dscMinted;
 
+    address[] private collateralTokens;
+
     StableCoin private immutable dsc;
 
     /**
@@ -81,6 +83,7 @@ contract DSCEngine {
         //set mapping of price feeds
         for (uint256 i = 0; i < tokenAddresses.length; i++) {
             priceFeeds[tokenAddresses[i]] = priceFeedAddresses[i];
+            collateralTokens.push(tokenAddresses[i]);
         }
         dsc = StableCoin(dscAddress);
     }
