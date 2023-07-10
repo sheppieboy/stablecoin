@@ -40,6 +40,7 @@ contract DSCEngine {
      */
     mapping(address token => address priceFeed) private priceFeeds; //mapping fo token address to price feed address
     mapping(address user => mapping(address token => uint256 amount)) private collateralDeposited;
+    mapping(address user => uint256 amountDSCMinted) private dscMinted;
 
     StableCoin private immutable dsc;
 
@@ -68,11 +69,10 @@ contract DSCEngine {
         _;
     }
 
-    /**
-     *
-     * Functions *
-     *
-     */
+    ///////////////////
+    /// Functions ///
+    /////////////////
+
     constructor(address[] memory tokenAddresses, address[] memory priceFeedAddresses, address dscAddress) {
         if (tokenAddresses.length != priceFeedAddresses.length) {
             revert TokenAddressesAndPriceAddressesMustBeSameLength();
@@ -85,11 +85,9 @@ contract DSCEngine {
         dsc = StableCoin(dscAddress);
     }
 
-    /**
-     *
-     * External Functions *
-     *
-     */
+    ///////////////////
+    // External Functions
+    ///////////////////
 
     /**
      * Function to deposit collateral and recieve an equivalent stablecoin amount
@@ -145,6 +143,60 @@ contract DSCEngine {
 
     /**
      * function mintStableCoin, a function thats mints the stablecoin
+     * @param amountDSCToMint the ampunt of stablecoin the user would like to mint
+     * @notice they most have more collateral than dsc stablecoin
      */
-    function mintDSC() external {}
+    function mintDSC(uint256 amountDSCToMint) external moreThanZero(amountDSCToMint) {
+        dscMinted[msg.sender] += amountDSCToMint;
+        //if they minted too much
+        _revertIfHealthFactorIsBroken(msg.sender);
+    }
+
+    ///////////////////
+    // Public Functions
+    ///////////////////
+
+    ///////////////////
+    // Private Functions
+    ///////////////////
+
+    //////////////////////////////
+    // Private & Internal View & Pure Functions
+    //////////////////////////////
+
+    /**
+     * Checks the health factor of a users position, i.e. do they have enough collateral
+     * reverts if they do not
+     * @param user the users address that is trying to mint or redeem
+     */
+    function _revertIfHealthFactorIsBroken(address user) internal view {}
+
+    /**
+     * Returns how close to a liquiddation a user is
+     * If a user goes below 1, then they can get liquidated
+     */
+    function _healthFactor(address user) private view returns (uint256) {
+        //total collateral value
+        //total DSC minted
+        (uint256 totalDSCMInted, uint256 collateralValueInUSD) = _getAccountInformation(user);
+    }
+
+    function _getAccountInformation(address user)
+        private
+        view
+        returns (uint256 totalDSCMinted, uint256 collateralValueInUSD)
+    {
+        totalDSCMinted = dscMinted[user];
+        collateralValueInUSD = getAcccountCollateralValue(user);
+    }
+
+    ////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////
+    // External & Public View & Pure Functions ////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////
+    function getAccountCollateralValue(address user) public view returns (uint256) {
+        //loop through each collateral token, get the amount they have deposited, and map it to
+        // the price, to get the USD value
+    }
 }
