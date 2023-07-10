@@ -155,7 +155,7 @@ contract DSCEngine {
 
     /**
      * function mintStableCoin, a function thats mints the stablecoin
-     * @param amountDSCToMint the ampunt of stablecoin the user would like to mint
+     * @param amountDSCToMint the amount of stablecoin the user would like to mint
      * @notice they most have more collateral than dsc stablecoin
      */
     function mintDSC(uint256 amountDSCToMint) external moreThanZero(amountDSCToMint) {
