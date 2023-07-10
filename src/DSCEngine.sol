@@ -5,6 +5,12 @@ import "./StableCoin.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 
+error NeedsMoreThanZero();
+error TokenAddressesAndPriceAddressesMustBeSameLength();
+error InvalidTokenAddress();
+error TransferFailed();
+error BreaksHealthFactor(uint256 userhealthFactor);
+error MintFailed();
 /**
  * @title DSCEngine
  * @author
@@ -29,12 +35,6 @@ contract DSCEngine {
      * Errors *
      *
      */
-    error NeedsMoreThanZero();
-    error TokenAddressesAndPriceAddressesMustBeSameLength();
-    error InvalidTokenAddress();
-    error TransferFailed();
-    error BreaksHealthFactor(uint256 userhealthFactor);
-    error MintFailed();
 
     /**
      *
