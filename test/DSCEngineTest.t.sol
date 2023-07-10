@@ -44,4 +44,13 @@ contract DSCEngineTest is Test {
         vm.expectRevert(InvalidTokenAddress.selector);
         engine.depositCollateral(dai, 50);
     }
+
+    function test_IsZeroDeposit() public {
+        deal(WETH, randomUser, 1 ether);
+        vm.prank(randomUser);
+        vm.expectRevert(NeedsMoreThanZero.selector);
+        engine.depositCollateral(WETH, 0);
+    }
+
+    function test_collateralDepositUpdated() public {}
 }
