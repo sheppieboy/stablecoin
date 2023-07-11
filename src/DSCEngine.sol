@@ -95,10 +95,26 @@ contract DSCEngine {
     // External Functions
     ///////////////////
 
-    /**
-     * Function to deposit collateral and recieve an equivalent stablecoin amount
-     */
-    function depositCollateralAndMintStableCoin() external {}
+    function depositCollateralAndMintStableCoin(
+        address tokenCollateralAddress,
+        uint256 amountCollateral,
+        uint256 amountDSCToMint
+    ) external {
+        depositCollateral(tokenCollateralAddress, amountCollateral);
+        mintDSC(amountDSCToMint);
+    }
+
+    function redeemCollateralForStableCoin() external {}
+
+    function redeemCollateral() external {}
+
+    function burn() external {}
+
+    function liquidate() external {}
+
+    ///////////////////
+    // Public Functions
+    ///////////////////
 
     /**
      * function to deposit collateral to increase the current collateralization of position
@@ -108,7 +124,7 @@ contract DSCEngine {
      * @param amountCollateral the amount of collateral to deposit
      */
     function depositCollateral(address tokenCollateralAddress, uint256 amountCollateral)
-        external
+        public
         moreThanZero(amountCollateral)
         isAllowedToken(tokenCollateralAddress)
     {
@@ -121,38 +137,11 @@ contract DSCEngine {
     }
 
     /**
-     * function to redeem the collateral in exchange for the equivalent stablecoin amount
-     */
-    function redeemCollateralForStableCoin() external {}
-
-    /**
-     * function to redeemSomeCallateral to reduce collateral sizing for DSC position
-     */
-    function redeemCollateral() external {}
-
-    /**
-     * function to burn stablecoin
-     */
-
-    function burn() external {}
-
-    /**
-     * function to liquidate users position to rebalance the protocol
-     */
-
-    function liquidate() external {}
-
-    /**
-     * function to view the health of a user's position and see the health of their position
-     */
-    function getHealthFactor() external view {}
-
-    /**
      * function mintStableCoin, a function thats mints the stablecoin
      * @param amountDSCToMint the amount of stablecoin the user would like to mint
      * @notice they most have more collateral than dsc stablecoin
      */
-    function mintDSC(uint256 amountDSCToMint) external moreThanZero(amountDSCToMint) {
+    function mintDSC(uint256 amountDSCToMint) public moreThanZero(amountDSCToMint) {
         dscMinted[msg.sender] += amountDSCToMint;
         //if they minted too much
         _revertIfHealthFactorIsBroken(msg.sender);
@@ -163,12 +152,12 @@ contract DSCEngine {
     }
 
     ///////////////////
-    // Public Functions
-    ///////////////////
-
-    ///////////////////
     // Private Functions
     ///////////////////
+
+    function _redeemCollaterl() private {}
+
+    function _bur() private {}
 
     //////////////////////////////
     // Private & Internal View & Pure Functions
@@ -247,7 +236,7 @@ contract DSCEngine {
         return ((uint256(price) * ADDITION_FEED_PRECISION) * amount) / PRECISION;
     }
 
-    function getCollateralAmount(address tokenAddress) public view returns (uint256) {
+    function getCollateralTokenBalance(address tokenAddress) public view returns (uint256) {
         return collateralDeposited[msg.sender][tokenAddress];
     }
 }
