@@ -60,7 +60,7 @@ contract DSCEngineTest is Test {
         vm.stopPrank();
     }
 
-    function test_collateralDepositUpdatedCorrectly() public {
+    function test_collateralDepositedAndBalanceMatches() public {
         deal(WETH, randomUser, 1 ether);
         uint256 balance = IERC20(WETH).balanceOf(randomUser);
         assertEq(balance, 1 ether);
@@ -69,8 +69,18 @@ contract DSCEngineTest is Test {
 
         vm.startPrank(randomUser);
         IERC20(WETH).approve(address(engine), transferAmount);
-        engine.depositCollateral(WETH, 0.5 ether);
-        assertEq(IERC20(WETH).balanceOf(address(engine)), 0.5 ether);
+        engine.depositCollateral(WETH, transferAmount);
+        assertEq(IERC20(WETH).balanceOf(address(engine)), transferAmount);
         vm.stopPrank();
+    }
+
+    function test_collateralMappingUpdatedCorrectly() public {
+        deal(WETH, randomUser, 1 ether);
+        vm.startPrank(randomUser);
+        IERC20(WETH).approve(address(engine), 0.5 ether);
+        engine.depositCollateral(WETH, 0.5 ether);
+        uint256 depositedAmount = engine.getCollateralAmount(WETH);
+        vm.stopPrank();
+        assertEq(depositedAmount, 0.5 ether);
     }
 }
