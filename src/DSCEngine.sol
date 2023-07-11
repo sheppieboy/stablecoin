@@ -115,7 +115,6 @@ contract DSCEngine {
         collateralDeposited[msg.sender][tokenCollateralAddress] += amountCollateral;
         emit CollateralDeposited(msg.sender, tokenCollateralAddress, amountCollateral);
         bool success = IERC20(tokenCollateralAddress).transferFrom(msg.sender, address(this), amountCollateral);
-        require(success, "transfer failed");
         if (!success) {
             revert TransferFailed();
         }
