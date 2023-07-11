@@ -32,12 +32,6 @@ error MintFailed();
 contract DSCEngine {
     /**
      *
-     * Errors *
-     *
-     */
-
-    /**
-     *
      * State Variables *
      *
      */
@@ -121,6 +115,7 @@ contract DSCEngine {
         collateralDeposited[msg.sender][tokenCollateralAddress] += amountCollateral;
         emit CollateralDeposited(msg.sender, tokenCollateralAddress, amountCollateral);
         bool success = IERC20(tokenCollateralAddress).transferFrom(msg.sender, address(this), amountCollateral);
+        require(success, "transfer failed");
         if (!success) {
             revert TransferFailed();
         }
@@ -251,5 +246,9 @@ contract DSCEngine {
         AggregatorV3Interface priceFeed = AggregatorV3Interface(priceFeeds[token]);
         (, int256 price,,,) = priceFeed.latestRoundData();
         return ((uint256(price) * ADDITION_FEED_PRECISION) * amount) / PRECISION;
+    }
+
+    function getCollateralAmount(address tokenAddress) public view returns (uint256) {
+        return collateralDeposited[msg.sender][tokenAddress];
     }
 }
