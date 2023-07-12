@@ -142,7 +142,10 @@ contract DSCEngine {
         _revertIfHealthFactorIsBroken(msg.sender);
     }
 
-    function burnDSC(uint256 amount) moreThanZero(amount) {}
+    function burnDSC(uint256 amount) external moreThanZero(amount) {
+        _burn(msg.sender, msg.sender, amount);
+        _revertIfHealthFactorIsBroken(msg.sender);
+    }
 
     /**
      *
