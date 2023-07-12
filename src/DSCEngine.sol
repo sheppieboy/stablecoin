@@ -362,4 +362,44 @@ contract DSCEngine {
     function getCollateralTokenBalance(address tokenAddress) public view returns (uint256) {
         return collateralDeposited[msg.sender][tokenAddress];
     }
+
+    function getFeedPrecision() public pure returns (uint256) {
+        return ADDITION_FEED_PRECISION;
+    }
+
+    function getPrecision() external pure returns (uint256) {
+        return PRECISION;
+    }
+
+    function getMinHealthFactor() external pure returns (uint256) {
+        return MIN_HEALTH_FACTOR;
+    }
+
+    function getLiquidationBonus() external pure returns (uint256) {
+        return LIQUIDATOR_BONUS;
+    }
+
+    function getLiquidationPrecision() external pure returns (uint256) {
+        return LIQUIDATION_PRECISION;
+    }
+
+    function getLiquidationThreshold() external pure returns (uint256) {
+        return LIQUIDATION_THRESHOLD;
+    }
+
+    function getDSCAddress() external view returns (address) {
+        return address(dsc);
+    }
+
+    function getCollateralTokens() external view returns (address[] memory) {
+        return collateralTokens;
+    }
+
+    function getPriceFeedAddress(address token) external view returns (address) {
+        return priceFeeds[token];
+    }
+
+    function getHealthFactor(address user) external view returns (uint256) {
+        return _healthFactor(user);
+    }
 }
