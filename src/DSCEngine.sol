@@ -127,8 +127,9 @@ contract DSCEngine {
     function redeemCollateralForStableCoin(address tokenAddress, uint256 amountCollateral, uint256 amountDSCToBurn)
         external
     {
-        //burnDSC(amountDSCToBurn);
-        //redeemCollateral(tokenAddress, amountCollateral);
+        _burn(amountDSCToBurn, msg.sender, msg.sender);
+        _redeemCollateral(tokenAddress, amountCollateral, msg.sender, msg.sender);
+        _revertIfHealthFactorIsBroken(msg.sender);
     }
 
     /**
@@ -262,7 +263,7 @@ contract DSCEngine {
         }
     }
     /**
-     * @dev low-level inetranl function, do not call unless the function calling it checking for health factors being broken
+     * @dev low-level internal function, do not call unless the function calling it checking for health factors being broken
      */
 
     function _burn(uint256 amountDSCToBurn, address debtor, address liquidator) private {
