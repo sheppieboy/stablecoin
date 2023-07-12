@@ -367,39 +367,39 @@ contract DSCEngine {
         return ADDITION_FEED_PRECISION;
     }
 
-    function getPrecision() external pure returns (uint256) {
+    function getPrecision() public pure returns (uint256) {
         return PRECISION;
     }
 
-    function getMinHealthFactor() external pure returns (uint256) {
+    function getMinHealthFactor() public pure returns (uint256) {
         return MIN_HEALTH_FACTOR;
     }
 
-    function getLiquidationBonus() external pure returns (uint256) {
+    function getLiquidationBonus() public pure returns (uint256) {
         return LIQUIDATOR_BONUS;
     }
 
-    function getLiquidationPrecision() external pure returns (uint256) {
+    function getLiquidationPrecision() public pure returns (uint256) {
         return LIQUIDATION_PRECISION;
     }
 
-    function getLiquidationThreshold() external pure returns (uint256) {
+    function getLiquidationThreshold() public pure returns (uint256) {
         return LIQUIDATION_THRESHOLD;
     }
 
-    function getDSCAddress() external view returns (address) {
+    function getDSCAddress() public view returns (address) {
         return address(dsc);
     }
 
-    function getCollateralTokens() external view returns (address[] memory) {
+    function getCollateralTokens() public view returns (address[] memory) {
         return collateralTokens;
     }
 
-    function getPriceFeedAddress(address token) external view returns (address) {
+    function getPriceFeedAddress(address token) public view returns (address) {
         return priceFeeds[token];
     }
 
-    function getHealthFactor(address user) external view returns (uint256) {
+    function getHealthFactor(address user) public view returns (uint256) {
         return _healthFactor(user);
     }
 }
