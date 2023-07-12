@@ -11,6 +11,7 @@ error InvalidTokenAddress();
 error TransferFailed();
 error BreaksHealthFactor(uint256 userhealthFactor);
 error MintFailed();
+error HealthFactorOk();
 /**
  * @title DSCEngine
  * @author
@@ -39,7 +40,8 @@ contract DSCEngine {
     uint256 private constant PRECISION = 1e18;
     uint256 private constant LIQUIDATION_THRESHOLD = 50; //200% covercollateralized
     uint256 private constant LIQUIDATION_PRECISION = 100;
-    uint256 private constant MIN_HEALTH_FACTOR = 1;
+    uint256 private constant MIN_HEALTH_FACTOR = 1e18;
+    uint256 private constant LIQUIDATOR_BONUS = 10;
 
     mapping(address token => address priceFeed) private priceFeeds; //mapping fo token address to price feed address
     mapping(address user => mapping(address token => uint256 amount)) private collateralDeposited;
@@ -128,7 +130,42 @@ contract DSCEngine {
         redeemCollateral(tokenAddress, amountCollateral);
     }
 
-    function liquidate() external {}
+    /**
+     *
+     * @param tokenCollateral The erc20 collateral address to liquidate from the user
+     * @param userToLiquidate the user who has broken the health factor. Their _healthfactor should be below MIN_HEALTH_FACTOR
+     * @param debtToCover The amount of DSC you want to burn to improve the users health factor
+     *
+     * @notice Youy can partially liquidate a user.
+     * @notice You will get a liquidation bonus for taking the users funds
+     * @notice This function working assumes the protocol will be roughly 200% collateralized
+     * @notice a known bug would be if the protocol were 100% or less collateralized then we wouldn't be able to incentize the liquidators
+     */
+    function liquidate(address tokenCollateral, address userToLiquidate, uint256 debtToCover)
+        external
+        moreThanZero(debtToCover)
+    {
+        //need to check health factor of user
+        uint256 startingUserFactor = _healthFactor(userToLiquidate);
+        if (startingUserFactor >= MIN_HEALTH_FACTOR) {
+            revert HealthFactorOk();
+        }
+
+        //we want to burn their dsc debt and take their collateral
+        //ex: bad user -> $140 eth and $100 dsc
+        //debtToCover = $100
+        uint256 tokenAmountFromDebtCovered = getTokenAmountFromUSD(tokenCollateral, debtToCover); //How much ETH do I need to cover $100? i.e. $100/ETH PRICE
+
+        //give them a 10% bonus for being the liquidator
+        //We should implement a future to liquidate in the event the protocol is insolvent
+        //and sweep extra amounts into a treasury
+        uint256 bonusCollateral = (tokenAmountFromDebtCovered * LIQUIDATOR_BONUS) / LIQUIDATION_PRECISION;
+
+        uint256 totalCollateralToRedeem = tokenAmountFromDebtCovered + bonusCollateral;
+
+        //NEED TO BURN DSC
+        //AND REDEEM
+    }
 
     ///////////////////
     // Public Functions
@@ -250,6 +287,12 @@ contract DSCEngine {
     // External & Public View & Pure Functions ////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////
+
+    function getTokenAmountFromUSD(address token, uint256 usdAmountInWei) public view returns (uint256) {
+        AggregatorV3Interface priceFeed = AggregatorV3Interface(priceFeeds[token]);
+        (, int256 price,,,) = priceFeed.latestRoundData();
+        return (usdAmountInWei * PRECISION) / (uint256(price) * ADDITION_FEED_PRECISION);
+    }
 
     /**
      *
