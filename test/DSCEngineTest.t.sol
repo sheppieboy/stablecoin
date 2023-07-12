@@ -54,6 +54,16 @@ contract DSCEngineTest is Test {
         randomUser = makeAddr("random");
     }
 
+    //Constructor Tests
+
+    function test_revertIfPriceFeedsAndTokenAddressesDiffLengths() public {
+        address[] memory priceFeedAddresses = new address[](4);
+        address[] memory tokenAddresses = new address[](3);
+        address dsc = deployCode("StableCoin.sol");
+        vm.expectRevert(TokenAddressesAndPriceAddressesMustBeSameLength.selector);
+        new DSCEngine(tokenAddresses, priceFeedAddresses, dsc);
+    }
+
     //DepositCollateral tests
     function test_NotAllowedToken() public {
         deal(dai, randomUser, 1 ether);
@@ -92,7 +102,7 @@ contract DSCEngineTest is Test {
         vm.startPrank(randomUser);
         IERC20(WETH).approve(address(engine), 0.5 ether);
         engine.depositCollateral(WETH, 0.5 ether);
-        uint256 depositedAmount = engine.getCollateralAmount(WETH);
+        uint256 depositedAmount = engine.getCollateralTokenBalance(WETH);
         vm.stopPrank();
         assertEq(depositedAmount, 0.5 ether);
     }
@@ -103,7 +113,7 @@ contract DSCEngineTest is Test {
         IERC20(address(mockERC20Fail)).approve(address(engine), 0.5 ether);
         vm.expectRevert(TransferFailed.selector);
         engine.depositCollateral(address(mockERC20Fail), 0.5 ether);
-        uint256 depositedAmount = engine.getCollateralAmount(address(mockERC20Fail));
+        uint256 depositedAmount = engine.getCollateralTokenBalance(address(mockERC20Fail));
         vm.stopPrank();
         assertEq(depositedAmount, 0);
     }
