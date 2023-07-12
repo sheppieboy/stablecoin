@@ -124,7 +124,15 @@ contract DSCEngine {
         _revertIfHealthFactorIsBroken(msg.sender);
     }
 
-    function burnDSC() external {}
+    function burnDSC(uint256 amount) external moreThanZero(amount) {
+        dscMinted[msg.sender] -= amount;
+        bool success = dsc.transferFrom(msg.sender, address(this), amount);
+        if (!success) {
+            //probably unreachable as transfer has a revert on failure in dsc
+            revert TransferFailed();
+        }
+        dsc.burn(amount);
+    }
 
     function liquidate() external {}
 
