@@ -142,6 +142,8 @@ contract DSCEngine {
         _revertIfHealthFactorIsBroken(msg.sender);
     }
 
+    function burnDSC(uint256 amount) moreThanZero(amount) {}
+
     /**
      *
      * @param tokenCollateral The erc20 collateral address to liquidate from the user
@@ -218,16 +220,6 @@ contract DSCEngine {
         }
     }
 
-    function burnDSC(uint256 amount) public moreThanZero(amount) {
-        dscMinted[msg.sender] -= amount;
-        bool success = dsc.transferFrom(msg.sender, address(this), amount);
-        if (!success) {
-            //probably unreachable as transfer has a revert on failure in dsc
-            revert TransferFailed();
-        }
-        dsc.burn(amount);
-    }
-
     ///////////////////
     // Private Functions
     ///////////////////
@@ -238,6 +230,8 @@ contract DSCEngine {
      * @param amountCollateral the number of collateral tokens you want to redeem
      * @param from the person whose balance is being liquidated/or you could be the person wanting to redeem your own balance
      * @param to the liquidator
+     *
+     * @dev low-level private, internal function - do not call unless the function calling it checking for health factors being broken
      */
     function _redeemCollateral(address tokenAddress, uint256 amountCollateral, address from, address to) private {
         collateralDeposited[from][tokenAddress] -= amountCollateral;
@@ -247,8 +241,19 @@ contract DSCEngine {
             revert TransferFailed();
         }
     }
+    /**
+     * @dev low-level inetranl function, do not call unless the function calling it checking for health factors being broken
+     */
 
-    function _burn() private {}
+    function _burn(uint256 amountDSCToBurn, address debtor, address liquidator) private {
+        dscMinted[debtor] -= amount;
+        bool success = dsc.transferFrom(liquidator, address(this), amount);
+        if (!success) {
+            //probably unreachable as transfer has a revert on failure in dsc
+            revert TransferFailed();
+        }
+        dsc.burn(amount);
+    }
 
     //////////////////////////////
     // Private & Internal View & Pure Functions
