@@ -64,6 +64,15 @@ contract DSCEngineTest is Test {
         new DSCEngine(tokenAddresses, priceFeedAddresses, dsc);
     }
 
+    function test_InitializedStableCoin() public {
+        address[] memory priceFeedAddresses = new address[](4);
+        address[] memory tokenAddresses = new address[](4);
+        address dsc = deployCode("StableCoin.sol");
+        DSCEngine mockEngine = new DSCEngine(tokenAddresses, priceFeedAddresses, dsc);
+        console.log(mockEngine.getDSCAddress());
+        assertEq(dsc, mockEngine.getDSCAddress());
+    }
+
     //DepositCollateral tests
     function test_NotAllowedToken() public {
         deal(dai, randomUser, 1 ether);
