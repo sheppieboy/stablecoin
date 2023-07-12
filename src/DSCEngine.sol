@@ -207,12 +207,6 @@ contract DSCEngine {
     }
 
     function redeemCollateral(address tokenAddress, uint256 amountCollateral) public moreThanZero(amountCollateral) {
-        collateralDeposited[msg.sender][tokenAddress] -= amountCollateral;
-        emit CollateralRedeemed(msg.sender, tokenAddress, amountCollateral);
-        bool success = IERC20(tokenAddress).transfer(msg.sender, amountCollateral);
-        if (!success) {
-            revert TransferFailed();
-        }
         _revertIfHealthFactorIsBroken(msg.sender);
     }
 
