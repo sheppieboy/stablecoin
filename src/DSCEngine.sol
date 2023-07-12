@@ -55,7 +55,7 @@ contract DSCEngine {
      * EVENTS
      */
     event CollateralDeposited(address indexed user, address indexed collateralTokenAddress, uint256 amount);
-    event CollateralRedeemed(address indexed user, address indexed token, uint256 amount);
+    event CollateralRedeemed(address indexed from, addressed indexed to, address indexed token, uint256 amount);
 
     /**
      *
@@ -128,6 +128,18 @@ contract DSCEngine {
     {
         burnDSC(amountDSCToBurn);
         redeemCollateral(tokenAddress, amountCollateral);
+    }
+
+    /**
+     *
+     * @param tokenAddress the token address of the collateral you used
+     * @param amountCollateral the number of tokens/ amount you want to redeem from your collateral
+     *
+     * @notice This function will redeem and update the users balance themself, hence we see the msg.sender, msg.sender in _redeemCollateral function call
+     */
+    function redeemCollateral(address tokenAddress, uint256 amountCollateral) external moreThanZero(amountCollateral) {
+        _redeemCollateral(tokenAddress, amountCollateral, msg.sender, msg.sender);
+        _revertIfHealthFactorIsBroken(msg.sender);
     }
 
     /**
@@ -206,10 +218,6 @@ contract DSCEngine {
         }
     }
 
-    function redeemCollateral(address tokenAddress, uint256 amountCollateral) public moreThanZero(amountCollateral) {
-        _revertIfHealthFactorIsBroken(msg.sender);
-    }
-
     function burnDSC(uint256 amount) public moreThanZero(amount) {
         dscMinted[msg.sender] -= amount;
         bool success = dsc.transferFrom(msg.sender, address(this), amount);
@@ -224,7 +232,21 @@ contract DSCEngine {
     // Private Functions
     ///////////////////
 
-    function _redeemCollateral() private {}
+    /**
+     *
+     * @param tokenAddress the token address of the collateral
+     * @param amountCollateral the number of collateral tokens you want to redeem
+     * @param from the person whose balance is being liquidated/or you could be the person wanting to redeem your own balance
+     * @param to the liquidator
+     */
+    function _redeemCollateral(address tokenAddress, uint256 amountCollateral, address from, address to) private {
+        collateralDeposited[from][tokenAddress] -= amountCollateral;
+        emit CollateralRedeemed(from, to, tokenAddress, amountCollateral);
+        bool success = IERC20(tokenAddress).transfer(to, amountCollateral);
+        if (!success) {
+            revert TransferFailed();
+        }
+    }
 
     function _burn() private {}
 
