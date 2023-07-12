@@ -12,6 +12,7 @@ error TransferFailed();
 error BreaksHealthFactor(uint256 userhealthFactor);
 error MintFailed();
 error HealthFactorOk();
+error HealthFactorNotOk();
 /**
  * @title DSCEngine
  * @author
@@ -55,7 +56,7 @@ contract DSCEngine {
      * EVENTS
      */
     event CollateralDeposited(address indexed user, address indexed collateralTokenAddress, uint256 amount);
-    event CollateralRedeemed(address indexed from, addressed indexed to, address indexed token, uint256 amount);
+    event CollateralRedeemed(address indexed from, address indexed to, address indexed token, uint256 amount);
 
     /**
      *
@@ -126,8 +127,8 @@ contract DSCEngine {
     function redeemCollateralForStableCoin(address tokenAddress, uint256 amountCollateral, uint256 amountDSCToBurn)
         external
     {
-        burnDSC(amountDSCToBurn);
-        redeemCollateral(tokenAddress, amountCollateral);
+        //burnDSC(amountDSCToBurn);
+        //redeemCollateral(tokenAddress, amountCollateral);
     }
 
     /**
@@ -142,8 +143,14 @@ contract DSCEngine {
         _revertIfHealthFactorIsBroken(msg.sender);
     }
 
+    /**
+     *
+     * @param amount the amount fof DSC the user wants to burn
+     *
+     * @notice this function is used if the user wants to reduce their own supply of DSC to fix their health ratio instead of adding more collateral
+     */
     function burnDSC(uint256 amount) external moreThanZero(amount) {
-        _burn(msg.sender, msg.sender, amount);
+        _burn(amount, msg.sender, msg.sender);
         _revertIfHealthFactorIsBroken(msg.sender);
     }
 
@@ -182,6 +189,16 @@ contract DSCEngine {
 
         //NEED TO BURN DSC
         //AND REDEEM
+
+        _redeemCollateral(tokenCollateral, totalCollateralToRedeem, userToLiquidate, msg.sender);
+        _burn(debtToCover, userToLiquidate, msg.sender);
+        uint256 endingUserHealthFactor = _healthFactor(userToLiquidate);
+        if (endingUserHealthFactor <= startingUserFactor) {
+            revert HealthFactorNotOk();
+        }
+
+        //reverts if the liquidators health factor goes below standard
+        _revertIfHealthFactorIsBroken(msg.sender);
     }
 
     ///////////////////
@@ -249,13 +266,13 @@ contract DSCEngine {
      */
 
     function _burn(uint256 amountDSCToBurn, address debtor, address liquidator) private {
-        dscMinted[debtor] -= amount;
-        bool success = dsc.transferFrom(liquidator, address(this), amount);
+        dscMinted[debtor] -= amountDSCToBurn;
+        bool success = dsc.transferFrom(liquidator, address(this), amountDSCToBurn);
         if (!success) {
             //probably unreachable as transfer has a revert on failure in dsc
             revert TransferFailed();
         }
-        dsc.burn(amount);
+        dsc.burn(amountDSCToBurn);
     }
 
     //////////////////////////////
