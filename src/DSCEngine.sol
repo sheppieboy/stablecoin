@@ -53,6 +53,7 @@ contract DSCEngine {
      * EVENTS
      */
     event CollateralDeposited(address indexed user, address indexed collateralTokenAddress, uint256 amount);
+    event CollateralRedeemed(address indexed user, address indexed token, uint256 amount);
 
     /**
      *
@@ -95,6 +96,13 @@ contract DSCEngine {
     // External Functions
     ///////////////////
 
+    /**
+     *
+     * @param tokenCollateralAddress the address of the ERC20 token deposited for collateral
+     * @param amountCollateral the amount of collateral deposited i.e. how many tokens
+     * @param amountDSCToMint the $amount of DSC to mint that you want i.e. 50 -> $50
+     * @notice This function deposits the collateral and mints the DSC in one transaction
+     */
     function depositCollateralAndMintStableCoin(
         address tokenCollateralAddress,
         uint256 amountCollateral,
@@ -106,9 +114,17 @@ contract DSCEngine {
 
     function redeemCollateralForStableCoin() external {}
 
-    function redeemCollateral() external {}
+    function redeemCollateral(address tokenAddress, uint256 amountCollateral) external moreThanZero(amountCollateral) {
+        collateralDeposited[msg.sender][tokenAddress] -= amountCollateral;
+        emit CollateralRedeemed(msg.sender, tokenAddress, amountCollateral);
+        bool success = IERC20(tokenAddress).transfer(msg.sender, amountCollateral);
+        if (!success) {
+            revert TransferFailed();
+        }
+        _revertIfHealthFactorIsBroken(msg.sender);
+    }
 
-    function burn() external {}
+    function burnDSC() external {}
 
     function liquidate() external {}
 
@@ -155,9 +171,9 @@ contract DSCEngine {
     // Private Functions
     ///////////////////
 
-    function _redeemCollaterl() private {}
+    function _redeemCollateral() private {}
 
-    function _bur() private {}
+    function _burn() private {}
 
     //////////////////////////////
     // Private & Internal View & Pure Functions
