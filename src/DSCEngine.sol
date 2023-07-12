@@ -112,26 +112,20 @@ contract DSCEngine {
         mintDSC(amountDSCToMint);
     }
 
-    function redeemCollateralForStableCoin() external {}
+    /**
+     *
+     * @param tokenAddress the token address that is collateral
+     * @param amountCollateral amount of collateral the user wants to redeeem
+     * @param amountDSCToBurn the amount of DSC to burn
+     *
+     * This function burns DSC and redeems underlying collateral in one transaction
+     */
 
-    function redeemCollateral(address tokenAddress, uint256 amountCollateral) external moreThanZero(amountCollateral) {
-        collateralDeposited[msg.sender][tokenAddress] -= amountCollateral;
-        emit CollateralRedeemed(msg.sender, tokenAddress, amountCollateral);
-        bool success = IERC20(tokenAddress).transfer(msg.sender, amountCollateral);
-        if (!success) {
-            revert TransferFailed();
-        }
-        _revertIfHealthFactorIsBroken(msg.sender);
-    }
-
-    function burnDSC(uint256 amount) external moreThanZero(amount) {
-        dscMinted[msg.sender] -= amount;
-        bool success = dsc.transferFrom(msg.sender, address(this), amount);
-        if (!success) {
-            //probably unreachable as transfer has a revert on failure in dsc
-            revert TransferFailed();
-        }
-        dsc.burn(amount);
+    function redeemCollateralForStableCoin(address tokenAddress, uint256 amountCollateral, uint256 amountDSCToBurn)
+        external
+    {
+        burnDSC(amountDSCToBurn);
+        redeemCollateral(tokenAddress, amountCollateral);
     }
 
     function liquidate() external {}
@@ -173,6 +167,26 @@ contract DSCEngine {
         if (!minted) {
             revert MintFailed();
         }
+    }
+
+    function redeemCollateral(address tokenAddress, uint256 amountCollateral) public moreThanZero(amountCollateral) {
+        collateralDeposited[msg.sender][tokenAddress] -= amountCollateral;
+        emit CollateralRedeemed(msg.sender, tokenAddress, amountCollateral);
+        bool success = IERC20(tokenAddress).transfer(msg.sender, amountCollateral);
+        if (!success) {
+            revert TransferFailed();
+        }
+        _revertIfHealthFactorIsBroken(msg.sender);
+    }
+
+    function burnDSC(uint256 amount) public moreThanZero(amount) {
+        dscMinted[msg.sender] -= amount;
+        bool success = dsc.transferFrom(msg.sender, address(this), amount);
+        if (!success) {
+            //probably unreachable as transfer has a revert on failure in dsc
+            revert TransferFailed();
+        }
+        dsc.burn(amount);
     }
 
     ///////////////////
