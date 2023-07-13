@@ -77,7 +77,6 @@ contract DSCEngineTest is Test {
     function test_NotAllowedToken() public {
         deal(dai, randomUser, 1 ether);
         vm.startPrank(randomUser);
-        IERC20(WETH).approve(address(engine), 0);
         vm.expectRevert(InvalidTokenAddress.selector);
         engine.depositCollateral(dai, 50);
         vm.stopPrank();
@@ -126,4 +125,20 @@ contract DSCEngineTest is Test {
         vm.stopPrank();
         assertEq(depositedAmount, 0);
     }
+
+    //mintDSC tests
+    function test_MintZero() public {
+        vm.prank(randomUser);
+        vm.expectRevert(NeedsMoreThanZero.selector);
+        engine.mintDSC(0);
+    }
+    //
+
+    //Deposit and mint DSC
+
+    //check that function works correctly with a normal deposit
+
+    //Check that the user recieves the correct amount of DSC
+
+    //Check reverts if health score not good
 }
