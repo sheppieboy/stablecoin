@@ -57,18 +57,18 @@ contract DSCEngineTest is Test {
     function test_revertIfPriceFeedsAndTokenAddressesDiffLengths() public {
         address[] memory priceFeedAddresses = new address[](4);
         address[] memory tokenAddresses = new address[](3);
-        address dsc = deployCode("StableCoin.sol");
+        address dscAddr = deployCode("StableCoin.sol");
         vm.expectRevert(TokenAddressesAndPriceAddressesMustBeSameLength.selector);
-        new DSCEngine(tokenAddresses, priceFeedAddresses, dsc);
+        new DSCEngine(tokenAddresses, priceFeedAddresses, dscAddr);
     }
 
     function test_InitializedStableCoin() public {
         address[] memory priceFeedAddresses = new address[](4);
         address[] memory tokenAddresses = new address[](4);
-        address dsc = deployCode("StableCoin.sol");
-        DSCEngine mockEngine = new DSCEngine(tokenAddresses, priceFeedAddresses, dsc);
+        address dscAddr = deployCode("StableCoin.sol");
+        DSCEngine mockEngine = new DSCEngine(tokenAddresses, priceFeedAddresses, dscAddr);
         console.log(mockEngine.getDSCAddress());
-        assertEq(dsc, mockEngine.getDSCAddress());
+        assertEq(dscAddr, mockEngine.getDSCAddress());
     }
 
     //DepositCollateral tests
@@ -132,9 +132,9 @@ contract DSCEngineTest is Test {
         priceFeedAddresses[1] = address(0xF4030086522a5bEEa4988F8cA5B36dbC97BeE88c);
         priceFeedAddresses[2] = makeAddr("failederc20");
 
-        address dsc = deployCode("StableCoin.sol");
+        address dscAddr = deployCode("StableCoin.sol");
 
-        DSCEngine engineWithFakeERC20 = new DSCEngine(tokenAddresses, priceFeedAddresses, dsc);
+        DSCEngine engineWithFakeERC20 = new DSCEngine(tokenAddresses, priceFeedAddresses, dscAddr);
 
         deal(address(mockERC20Fail), randomUser, 1 ether);
         vm.startPrank(randomUser);
